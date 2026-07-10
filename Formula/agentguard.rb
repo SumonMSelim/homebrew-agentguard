@@ -1,8 +1,8 @@
 class Agentguard < Formula
   desc "Security guardrails for AI coding agents (Claude Code, Kiro, Cursor, Codex)"
   homepage "https://github.com/SumonMSelim/agentguard"
-  url "https://github.com/SumonMSelim/agentguard/archive/refs/tags/v2.1.0.tar.gz"
-  sha256 "b3e8cac1017f0f1ba06b1a7f48fda4d97be90a28ead6fad1a9c85d867cf007b4"
+  url "https://github.com/SumonMSelim/agentguard/archive/refs/tags/v2.1.1.tar.gz"
+  sha256 "32f21f24ae17bf6a634dabbb04baade26362163ae69ae311459ef19ec1ec05bd"
   license "MIT"
 
   depends_on "jq"
@@ -15,6 +15,20 @@ class Agentguard < Formula
       exec bash "#{libexec}/install.sh" "$@"
     SH
     chmod 0755, bin/"agentguard"
+  end
+
+  def post_install
+    config_file = "#{Dir.home}/.agentguard/config"
+    return unless File.exist?(config_file)
+
+    line = File.readlines(config_file).reverse.find { |l| l.start_with?("AGENTGUARD_INSTALLED_AGENTS=") }
+    return unless line
+
+    agents = line.sub("AGENTGUARD_INSTALLED_AGENTS=", "").strip.delete_prefix('"').delete_suffix('"').split
+    agents.each do |agent|
+      system bin/"agentguard", "uninstall", agent
+      system bin/"agentguard", agent
+    end
   end
 
   def caveats
